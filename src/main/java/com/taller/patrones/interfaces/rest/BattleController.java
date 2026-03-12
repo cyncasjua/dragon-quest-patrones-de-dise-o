@@ -3,6 +3,12 @@ package com.taller.patrones.interfaces.rest;
 import com.taller.patrones.application.BattleService;
 import com.taller.patrones.domain.Battle;
 import com.taller.patrones.domain.Character;
+import com.taller.patrones.interfaces.rest.adapter.AlternativeBattleDataAdapter;
+import com.taller.patrones.interfaces.rest.adapter.ExternalBattleDataAdapter;
+import com.taller.patrones.interfaces.rest.adapter.StandardBattleDataAdapter;
+import com.taller.patrones.interfaces.rest.dto.AlternativeExternalBattleData;
+import com.taller.patrones.interfaces.rest.dto.BattleData;
+import com.taller.patrones.interfaces.rest.dto.ExternalBattleData;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,28 +40,38 @@ public class BattleController {
                 "playerAttacks", BattleService.PLAYER_ATTACKS,
                 "enemyAttacks", BattleService.ENEMY_ATTACKS,
                 "lastDamage", 0,
-                "lastDamageTarget", ""
-        ));
+                "lastDamageTarget", ""));
     }
 
     /**
-     * Endpoint alternativo: recibe datos de combate en formato "externo".
-     * Los campos vienen con nombres distintos (fighter1_hp, fighter1_atk...).
-     * La conversión se hace aquí, manualmente, en el controller.
+     * Endpoint: recibe datos de combate en formato "estándar" del proveedor 1.
+     * Los campos vienen como: fighter1_hp, fighter1_atk, fighter2_name, etc.
+     * 
+     * Patrón Adapter en acción:
+     * - El controller NO hace conversión manual
+     * - Delega al StandardBattleDataAdapter la traducción del formato externo
+     * - El controller solo orquesta: recibe DTO → adapta → llama al servicio
+     * 
+     * Ejemplo de JSON:
+     * {
+     * "fighter1_name": "Link",
+     * "fighter1_hp": 180,
+     * "fighter1_atk": 30,
+     * "fighter2_name": "Ganon",
+     * "fighter2_hp": 200,
+     * "fighter2_atk": 35
+     * }
      */
     @PostMapping("/start/external")
-    public ResponseEntity<Map<String, Object>> startBattleFromExternal(@RequestBody Map<String, Object> body) {
-        String fighter1Name = (String) body.getOrDefault("fighter1_name", "Héroe");
-        int fighter1Hp = ((Number) body.getOrDefault("fighter1_hp", 150)).intValue();
-        int fighter1Atk = ((Number) body.getOrDefault("fighter1_atk", 25)).intValue();
-        String fighter2Name = (String) body.getOrDefault("fighter2_name", "Dragón");
-        int fighter2Hp = ((Number) body.getOrDefault("fighter2_hp", 120)).intValue();
-        int fighter2Atk = ((Number) body.getOrDefault("fighter2_atk", 30)).intValue();
+    public ResponseEntity<Map<String, Object>> startBattleFromExternal(@RequestBody ExternalBattleData externalData) {
+        // Patrón Adapter: aísla la conversión en una clase específica
+        ExternalBattleDataAdapter<ExternalBattleData> adapter = new StandardBattleDataAdapter();
+        BattleData battleData = adapter.adaptToBattleData(externalData);
 
+        // El controller solo llama al servicio con datos ya adaptados
         var result = battleService.startBattleFromExternal(
-                fighter1Name, fighter1Hp, fighter1Atk,
-                fighter2Name, fighter2Hp, fighter2Atk
-        );
+                battleData.getFighter1Name(), battleData.getFighter1Hp(), battleData.getFighter1Attack(),
+                battleData.getFighter2Name(), battleData.getFighter2Hp(), battleData.getFighter2Attack());
         Battle battle = result.battle();
 
         return ResponseEntity.ok(Map.of(
@@ -67,22 +83,72 @@ public class BattleController {
                 "finished", battle.isFinished(),
                 "playerAttacks", BattleService.PLAYER_ATTACKS,
                 "lastDamage", 0,
-                "lastDamageTarget", ""
-        ));
+                "lastDamageTarget", ""));
+    }
+
+    /**
+     * Endpoint: recibe datos de combate en formato "alternativo" del proveedor 2.
+     * Los campos vienen anidados: player.health, player.attack, enemy.health, etc.
+     * 
+     * Ventaja del patrón Adapter:
+     * - Nuevo proveedor = nuevo adaptador, sin modificar controller ni servicio
+     * - Mantiene el principio Open/Closed: abierto a extensión, cerrado a
+     * modificación
+     * 
+     * Ejemplo de JSON:
+     * {
+     * "player": {
+     * "name": "Mario",
+     * "health": 150,
+     * "attack": 28
+     * },
+     * "enemy": {
+     * "name": "Bowser",
+     * "health": 180,
+     * "attack": 32
+     * }
+     * }
+     */
+    @PostMapping("/start/external/alternative")
+    public ResponseEntity<Map<String, Object>> startBattleFromAlternativeExternal(
+            @RequestBody AlternativeExternalBattleData externalData) {
+
+        // Patrón Adapter: cada formato tiene su propio adaptador
+        ExternalBattleDataAdapter<AlternativeExternalBattleData> adapter = new AlternativeBattleDataAdapter();
+        BattleData battleData = adapter.adaptToBattleData(externalData);
+
+        // El mismo código del servicio funciona sin importar el formato de origen
+        var result = battleService.startBattleFromExternal(
+                battleData.getFighter1Name(), battleData.getFighter1Hp(), battleData.getFighter1Attack(),
+                battleData.getFighter2Name(), battleData.getFighter2Hp(), battleData.getFighter2Attack());
+        Battle battle = result.battle();
+
+        return ResponseEntity.ok(Map.of(
+                "battleId", result.battleId(),
+                "player", toCharacterDto(battle.getPlayer()),
+                "enemy", toCharacterDto(battle.getEnemy()),
+                "currentTurn", battle.getCurrentTurn(),
+                "battleLog", battle.getBattleLog(),
+                "finished", battle.isFinished(),
+                "playerAttacks", BattleService.PLAYER_ATTACKS,
+                "lastDamage", 0,
+                "lastDamageTarget", ""));
     }
 
     @GetMapping("/{battleId}")
     public ResponseEntity<Map<String, Object>> getBattle(@PathVariable String battleId) {
         Battle battle = battleService.getBattle(battleId);
-        if (battle == null) return ResponseEntity.notFound().build();
+        if (battle == null)
+            return ResponseEntity.notFound().build();
         return ResponseEntity.ok(toBattleDto(battle));
     }
 
     @PostMapping("/{battleId}/attack")
     public ResponseEntity<Map<String, Object>> attack(@PathVariable String battleId,
-                                                       @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body) {
         Battle battle = battleService.getBattle(battleId);
-        if (battle == null) return ResponseEntity.notFound().build();
+        if (battle == null)
+            return ResponseEntity.notFound().build();
 
         String attackName = body != null && body.get("attack") != null ? body.get("attack") : "TACKLE";
 
@@ -98,7 +164,8 @@ public class BattleController {
     @PostMapping("/{battleId}/enemy-turn")
     public ResponseEntity<Map<String, Object>> enemyTurn(@PathVariable String battleId) {
         Battle battle = battleService.getBattle(battleId);
-        if (battle == null) return ResponseEntity.notFound().build();
+        if (battle == null)
+            return ResponseEntity.notFound().build();
         if (battle.isPlayerTurn() || battle.isFinished()) {
             return ResponseEntity.ok(toBattleDto(battle));
         }
@@ -116,8 +183,7 @@ public class BattleController {
                 "finished", battle.isFinished(),
                 "playerAttacks", BattleService.PLAYER_ATTACKS,
                 "lastDamage", battle.getLastDamage(),
-                "lastDamageTarget", battle.getLastDamageTarget() != null ? battle.getLastDamageTarget() : ""
-        );
+                "lastDamageTarget", battle.getLastDamageTarget() != null ? battle.getLastDamageTarget() : "");
     }
 
     private Map<String, Object> toCharacterDto(Character c) {
@@ -129,7 +195,6 @@ public class BattleController {
                 "attack", c.getAttack(),
                 "defense", c.getDefense(),
                 "speed", c.getSpeed(),
-                "alive", c.isAlive()
-        );
+                "alive", c.isAlive());
     }
 }
