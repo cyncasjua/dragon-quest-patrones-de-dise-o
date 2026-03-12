@@ -15,11 +15,22 @@ public class Attack {
         this.type = type;
     }
 
-    public String getName() { return name; }
-    public int getBasePower() { return basePower; }
-    public AttackType getType() { return type; }
+    public String getName() {
+        return name;
+    }
+
+    public int getBasePower() {
+        return basePower;
+    }
+
+    public AttackType getType() {
+        return type;
+    }
 
     public enum AttackType {
-        NORMAL, SPECIAL, STATUS
+        NORMAL, // Ataque físico estándar
+        SPECIAL, // Ataque que ignora parte de la defensa
+        STATUS, // Ataques de estado (veneno, parálisis) - no hacen daño directo
+        CRITICAL // Ataque crítico con daño aumentado (x1.5)
     }
 }

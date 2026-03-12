@@ -31,6 +31,11 @@ public class AttackFactory {
         // Nuevo ataque Meteoro
         registerAttack("METEORO", new Attack("Meteoro", 120, Attack.AttackType.SPECIAL));
 
+        // Ataques críticos (daño x1.5, probabilidad 20%)
+        registerAttack("CRITICAL_HIT", new Attack("Critical Hit", 60, Attack.AttackType.CRITICAL));
+        registerAttack("DRAGON_CLAW", new Attack("Dragon Claw", 85, Attack.AttackType.CRITICAL));
+        registerAttack("DEADLY_STRIKE", new Attack("Deadly Strike", 100, Attack.AttackType.CRITICAL));
+
         // Ataque por defecto
         this.defaultAttack = new Attack("Golpe", 30, Attack.AttackType.NORMAL);
     }
