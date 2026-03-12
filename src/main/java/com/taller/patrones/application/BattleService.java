@@ -14,11 +14,13 @@ import java.util.UUID;
  * <p>
  * Nota: Crea sus propias dependencias con new. Cada vez que necesitamos
  * un CombatEngine o BattleRepository, hacemos new aquí.
+ * BattleRepository usa Singleton para garantizar una única instancia
+ * compartida.
  */
 public class BattleService {
 
     private final CombatEngine combatEngine = new CombatEngine();
-    private final BattleRepository battleRepository = new BattleRepository();
+    private final BattleRepository battleRepository = BattleRepository.getInstance();
 
     public static final List<String> PLAYER_ATTACKS = List.of("TACKLE", "SLASH", "FIREBALL", "ICE_BEAM", "POISON_STING",
             "THUNDER");
