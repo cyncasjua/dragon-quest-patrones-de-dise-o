@@ -8,6 +8,9 @@ import com.taller.patrones.infrastructure.persistence.BattleRepository;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.ArrayList;
+import com.taller.patrones.domain.DamageDealtListener;
+import com.taller.patrones.domain.DamageDealtEvent;
 
 /**
  * Caso de uso: gestionar batallas.
@@ -18,6 +21,22 @@ import java.util.UUID;
  * compartida.
  */
 public class BattleService {
+
+    // Lista de observadores del evento de daño
+    private final List<DamageDealtListener> damageDealtListeners = new ArrayList<>();
+
+    // Permite registrar listeners
+    public void addDamageDealtListener(DamageDealtListener listener) {
+        damageDealtListeners.add(listener);
+    }
+
+    // Notifica a todos los listeners cuando ocurre daño
+    private void notifyDamageDealt(Battle battle, Character attacker, Character defender, int damage, Attack attack) {
+        DamageDealtEvent event = new DamageDealtEvent(battle, attacker, defender, damage, attack);
+        for (DamageDealtListener listener : damageDealtListeners) {
+            listener.onDamageDealt(event);
+        }
+    }
 
     private final CombatEngine combatEngine = new CombatEngine();
     private final BattleRepository battleRepository = BattleRepository.getInstance();
@@ -83,6 +102,8 @@ public class BattleService {
         battle.setLastDamage(damage, target);
         battle.log(attacker.getName() + " usa " + attack.getName() + " y hace " + damage + " de daño a "
                 + defender.getName());
+        // Notificar a los observadores
+        notifyDamageDealt(battle, attacker, defender, damage, attack);
         battle.switchTurn();
         if (!defender.isAlive()) {
             battle.finish(attacker.getName());
