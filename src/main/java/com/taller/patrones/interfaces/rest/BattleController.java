@@ -1,6 +1,7 @@
 package com.taller.patrones.interfaces.rest;
 
 import com.taller.patrones.application.BattleService;
+import com.taller.patrones.facade.CombatFacade;
 import com.taller.patrones.domain.Battle;
 import com.taller.patrones.domain.Character;
 import com.taller.patrones.interfaces.rest.adapter.AlternativeBattleDataAdapter;
@@ -21,13 +22,14 @@ import java.util.Map;
 public class BattleController {
 
     private final BattleService battleService = new BattleService();
+    private final CombatFacade combatFacade = new CombatFacade(battleService);
 
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startBattle(@RequestBody(required = false) Map<String, String> body) {
         String playerName = body != null && body.containsKey("playerName") ? body.get("playerName") : null;
         String enemyName = body != null && body.containsKey("enemyName") ? body.get("enemyName") : null;
 
-        var result = battleService.startBattle(playerName, enemyName);
+        var result = combatFacade.iniciarBatalla(playerName, enemyName);
         Battle battle = result.battle();
 
         return ResponseEntity.ok(Map.of(
@@ -146,32 +148,32 @@ public class BattleController {
     @PostMapping("/{battleId}/attack")
     public ResponseEntity<Map<String, Object>> attack(@PathVariable String battleId,
             @RequestBody Map<String, String> body) {
-        Battle battle = battleService.getBattle(battleId);
+        Battle battle = combatFacade.obtenerBatalla(battleId);
         if (battle == null)
             return ResponseEntity.notFound().build();
 
         String attackName = body != null && body.get("attack") != null ? body.get("attack") : "TACKLE";
 
         if (battle.isPlayerTurn()) {
-            battleService.executePlayerAttack(battleId, attackName);
+            combatFacade.atacarJugador(battleId, attackName);
         } else {
-            battleService.executeEnemyAttack(battleId, attackName);
+            combatFacade.atacarEnemigo(battleId, attackName);
         }
 
-        return ResponseEntity.ok(toBattleDto(battleService.getBattle(battleId)));
+        return ResponseEntity.ok(toBattleDto(combatFacade.obtenerBatalla(battleId)));
     }
 
     @PostMapping("/{battleId}/enemy-turn")
     public ResponseEntity<Map<String, Object>> enemyTurn(@PathVariable String battleId) {
-        Battle battle = battleService.getBattle(battleId);
+        Battle battle = combatFacade.obtenerBatalla(battleId);
         if (battle == null)
             return ResponseEntity.notFound().build();
         if (battle.isPlayerTurn() || battle.isFinished()) {
             return ResponseEntity.ok(toBattleDto(battle));
         }
         String attack = BattleService.ENEMY_ATTACKS.get((int) (Math.random() * BattleService.ENEMY_ATTACKS.size()));
-        battleService.executeEnemyAttack(battleId, attack);
-        return ResponseEntity.ok(toBattleDto(battleService.getBattle(battleId)));
+        combatFacade.atacarEnemigo(battleId, attack);
+        return ResponseEntity.ok(toBattleDto(combatFacade.obtenerBatalla(battleId)));
     }
 
     private Map<String, Object> toBattleDto(Battle battle) {
