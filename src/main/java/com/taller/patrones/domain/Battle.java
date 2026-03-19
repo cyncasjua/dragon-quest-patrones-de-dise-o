@@ -1,3 +1,4 @@
+
 package com.taller.patrones.domain;
 
 import java.util.ArrayList;
@@ -25,17 +26,68 @@ public class Battle {
         log("¡Comienza la batalla! " + player.getName() + " vs " + enemy.getName());
     }
 
-    public Character getPlayer() { return player; }
-    public Character getEnemy() { return enemy; }
-    public String getCurrentTurn() { return currentTurn; }
-    public List<String> getBattleLog() { return battleLog; }
-    public boolean isFinished() { return finished; }
-    public int getLastDamage() { return lastDamage; }
-    public String getLastDamageTarget() { return lastDamageTarget; }
+    public Character getPlayer() {
+        return player;
+    }
 
-    public void log(String message) { battleLog.add(message); }
-    public void switchTurn() { currentTurn = "player".equals(currentTurn) ? "enemy" : "player"; }
-    public void finish(String winner) { finished = true; log("¡" + winner + " gana la batalla!"); }
-    public boolean isPlayerTurn() { return "player".equals(currentTurn); }
-    public void setLastDamage(int damage, String target) { this.lastDamage = damage; this.lastDamageTarget = target; }
+    public Character getEnemy() {
+        return enemy;
+    }
+
+    public String getCurrentTurn() {
+        return currentTurn;
+    }
+
+    public List<String> getBattleLog() {
+        return battleLog;
+    }
+
+    public boolean isFinished() {
+        return finished;
+    }
+
+    public int getLastDamage() {
+        return lastDamage;
+    }
+
+    public String getLastDamageTarget() {
+        return lastDamageTarget;
+    }
+
+    public void log(String message) {
+        battleLog.add(message);
+    }
+
+    public void switchTurn() {
+        currentTurn = "player".equals(currentTurn) ? "enemy" : "player";
+    }
+
+    public void finish(String winner) {
+        finished = true;
+        log("¡" + winner + " gana la batalla!");
+    }
+
+    public boolean isPlayerTurn() {
+        return "player".equals(currentTurn);
+    }
+
+    public void setLastDamage(int damage, String target) {
+        this.lastDamage = damage;
+        this.lastDamageTarget = target;
+    }
+
+    public void setCurrentTurn(String turn) {
+        this.currentTurn = turn;
+    }
+
+    public void setFinished(boolean finished) {
+        this.finished = finished;
+    }
+
+    public void removeLastLog() {
+        if (!battleLog.isEmpty()) {
+            battleLog.remove(battleLog.size() - 1);
+        }
+    }
+
 }

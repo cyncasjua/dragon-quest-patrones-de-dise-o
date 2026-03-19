@@ -1,3 +1,4 @@
+
 package com.taller.patrones.domain;
 
 /**
@@ -79,6 +80,11 @@ public class Character {
 
     public double getHpPercentage() {
         return maxHp > 0 ? (double) currentHp / maxHp * 100 : 0;
+    }
+
+    // Permite modificar la vida actual (para undo de comandos)
+    public void setCurrentHp(int hp) {
+        this.currentHp = Math.max(0, Math.min(hp, maxHp));
     }
 
     /**

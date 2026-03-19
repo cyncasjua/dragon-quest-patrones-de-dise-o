@@ -20,7 +20,13 @@ import com.taller.patrones.domain.DamageDealtEvent;
  * BattleRepository usa Singleton para garantizar una única instancia
  * compartida.
  */
+import com.taller.patrones.domain.Command;
+import com.taller.patrones.domain.AttackCommand;
+import java.util.Stack;
+
 public class BattleService {
+    // Historial de comandos para deshacer
+    private final Stack<Command> commandHistory = new Stack<>();
 
     // Lista de observadores del evento de daño
     private final List<DamageDealtListener> damageDealtListeners = new ArrayList<>();
@@ -80,20 +86,28 @@ public class BattleService {
         Battle battle = battleRepository.findById(battleId);
         if (battle == null || battle.isFinished() || !battle.isPlayerTurn())
             return;
-
         Attack attack = combatEngine.createAttack(attackName);
-        int damage = combatEngine.calculateDamage(battle.getPlayer(), battle.getEnemy(), attack);
-        applyDamage(battle, battle.getPlayer(), battle.getEnemy(), damage, attack);
+        Command cmd = new AttackCommand(battle, battle.getPlayer(), battle.getEnemy(), attack, combatEngine);
+        cmd.execute();
+        commandHistory.push(cmd);
     }
 
     public void executeEnemyAttack(String battleId, String attackName) {
         Battle battle = battleRepository.findById(battleId);
         if (battle == null || battle.isFinished() || battle.isPlayerTurn())
             return;
-
         Attack attack = combatEngine.createAttack(attackName != null ? attackName : "TACKLE");
-        int damage = combatEngine.calculateDamage(battle.getEnemy(), battle.getPlayer(), attack);
-        applyDamage(battle, battle.getEnemy(), battle.getPlayer(), damage, attack);
+        Command cmd = new AttackCommand(battle, battle.getEnemy(), battle.getPlayer(), attack, combatEngine);
+        cmd.execute();
+        commandHistory.push(cmd);
+    }
+
+    // Método para deshacer el último ataque
+    public void undoLastAttack() {
+        if (!commandHistory.isEmpty()) {
+            Command cmd = commandHistory.pop();
+            cmd.undo();
+        }
     }
 
     private void applyDamage(Battle battle, Character attacker, Character defender, int damage, Attack attack) {
