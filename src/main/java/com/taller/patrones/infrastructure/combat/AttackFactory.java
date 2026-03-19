@@ -1,6 +1,7 @@
 package com.taller.patrones.infrastructure.combat;
 
 import com.taller.patrones.domain.Attack;
+import com.taller.patrones.domain.SimpleAttack;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,24 +21,24 @@ public class AttackFactory {
     private final Attack defaultAttack;
 
     public AttackFactory() {
-        // Registrar los ataques existentes
-        registerAttack("TACKLE", new Attack("Tackle", 40, Attack.AttackType.NORMAL));
-        registerAttack("SLASH", new Attack("Slash", 55, Attack.AttackType.NORMAL));
-        registerAttack("FIREBALL", new Attack("Fireball", 80, Attack.AttackType.SPECIAL));
-        registerAttack("ICE_BEAM", new Attack("Ice Beam", 70, Attack.AttackType.SPECIAL));
-        registerAttack("POISON_STING", new Attack("Poison Sting", 20, Attack.AttackType.STATUS));
-        registerAttack("THUNDER", new Attack("Thunder", 90, Attack.AttackType.SPECIAL));
+        // Registrar los ataques existentes como SimpleAttack
+        registerAttack("TACKLE", new SimpleAttack("Tackle", 40, Attack.AttackType.NORMAL));
+        registerAttack("SLASH", new SimpleAttack("Slash", 55, Attack.AttackType.NORMAL));
+        registerAttack("FIREBALL", new SimpleAttack("Fireball", 80, Attack.AttackType.SPECIAL));
+        registerAttack("ICE_BEAM", new SimpleAttack("Ice Beam", 70, Attack.AttackType.SPECIAL));
+        registerAttack("POISON_STING", new SimpleAttack("Poison Sting", 20, Attack.AttackType.STATUS));
+        registerAttack("THUNDER", new SimpleAttack("Thunder", 90, Attack.AttackType.SPECIAL));
 
         // Nuevo ataque Meteoro
-        registerAttack("METEORO", new Attack("Meteoro", 120, Attack.AttackType.SPECIAL));
+        registerAttack("METEORO", new SimpleAttack("Meteoro", 120, Attack.AttackType.SPECIAL));
 
         // Ataques críticos (daño x1.5, probabilidad 20%)
-        registerAttack("CRITICAL_HIT", new Attack("Critical Hit", 60, Attack.AttackType.CRITICAL));
-        registerAttack("DRAGON_CLAW", new Attack("Dragon Claw", 85, Attack.AttackType.CRITICAL));
-        registerAttack("DEADLY_STRIKE", new Attack("Deadly Strike", 100, Attack.AttackType.CRITICAL));
+        registerAttack("CRITICAL_HIT", new SimpleAttack("Critical Hit", 60, Attack.AttackType.CRITICAL));
+        registerAttack("DRAGON_CLAW", new SimpleAttack("Dragon Claw", 85, Attack.AttackType.CRITICAL));
+        registerAttack("DEADLY_STRIKE", new SimpleAttack("Deadly Strike", 100, Attack.AttackType.CRITICAL));
 
         // Ataque por defecto
-        this.defaultAttack = new Attack("Golpe", 30, Attack.AttackType.NORMAL);
+        this.defaultAttack = new SimpleAttack("Golpe", 30, Attack.AttackType.NORMAL);
     }
 
     /**

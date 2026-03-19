@@ -1,33 +1,18 @@
 package com.taller.patrones.domain;
 
 /**
- * Representa un ataque que puede ejecutar un personaje.
+ * Interfaz para representar cualquier tipo de ataque (simple o compuesto).
  */
-public class Attack {
+public interface Attack {
+    void executeDamage(Character attacker, Character defender);
 
-    private final String name;
-    private final int basePower;
-    private final AttackType type;
+    String getName();
 
-    public Attack(String name, int basePower, AttackType type) {
-        this.name = name;
-        this.basePower = basePower;
-        this.type = type;
-    }
+    int getBasePower();
 
-    public String getName() {
-        return name;
-    }
+    AttackType getType();
 
-    public int getBasePower() {
-        return basePower;
-    }
-
-    public AttackType getType() {
-        return type;
-    }
-
-    public enum AttackType {
+    enum AttackType {
         NORMAL, // Ataque físico estándar
         SPECIAL, // Ataque que ignora parte de la defensa
         STATUS, // Ataques de estado (veneno, parálisis) - no hacen daño directo
